@@ -1,6 +1,5 @@
 import numpy as np
-from math import cos
-PI=3.1415926
+from math import cos,pi
 import sys
 from scipy.signal import butter,filtfilt
 
@@ -45,25 +44,25 @@ def smooth_f0(f0):
     f0=f0[f0>0]
     return np.mean(f0)
 
-SMOOTH_RANGE=int(fs*0.1)
+SMOOTH_RANGE=int(fs*0.05)
 
-for k,h in zip([2,3,4],[0.75,0.7,0.7]):
-    ph=PI/2
-    preph=PI/2
-    for t in range(0,wav.shape[0]):
+K=5
+h=0.8
+ph=[pi/2]*K
+for t in range(0,wav.shape[0]):
         if t>500 and f0[t-500:t].all():
             if t<SMOOTH_RANGE:
                 s_f0=smooth_f0(f0[:SMOOTH_RANGE])
             else:
                 s_f0=smooth_f0(f0[t-SMOOTH_RANGE:t+SMOOTH_RANGE])
-            ph=PI/2+2*PI*(s_f0/k+(np.random.rand(1)[0]*2-1)*0)/fs*t-preph
-            prph=ph
-            xm[t]+=h*0.9*cos(ph)
+            for k in range(0,K):
+                ph[k] += 2*pi*(s_f0/(k+2)+(np.random.rand(1)[0]*2-1)*0*s_f0)/fs
+                xm[t] += h*cos(ph[k])
         else:
-            ph=PI/2
+            ph=[pi/2]*K
 
 
-if PLOT>0:
+if PLOT==1:
     print("plot")
     plt.figure()
     plt.plot(tt,xm)
@@ -79,8 +78,9 @@ for i in range(0,wav.shape[0]):
         y[i]=wav[i]
 
 ysub=y-wav
+ysub*=8
 
-print(type(ysub))
+
 wav=0.5*wav+mix*highpass(ysub,fs,1000)
 
 soundfile.write("test.wav",wav,fs)
