@@ -12,6 +12,7 @@ import matplotlib.pyplot as plt
 
 PLOT=0
 
+
 wav,fs=soundfile.read(sys.argv[1])
 _f0,t=pyworld.dio(wav,fs)
 f0=pyworld.stonemask(wav,_f0,t,fs)
@@ -19,9 +20,8 @@ f0=pyworld.stonemask(wav,_f0,t,fs)
 t*=fs
 
 tt=np.linspace(0,1,wav.shape[0])
-#f0=np.interp(tt,t,f0)
 f0=np.repeat(f0,fs*0.005)
-print(f0.shape,wav.shape)
+#print(f0.shape,wav.shape)
 
 
 
@@ -36,7 +36,7 @@ def highpass(x,fs,cutoff,axis=0):
     high=filtfilt(b,a,x,axis=axis)
     return high
 
-mix=1.0
+mix=0.9
 
 xm=[1]*wav.shape[0]
 
@@ -46,7 +46,7 @@ def smooth_f0(f0):
 
 SMOOTH_RANGE=int(fs*0.05)
 
-K=5
+K=3
 h=0.8
 ph=[pi/2]*K
 for t in range(0,wav.shape[0]):
@@ -56,7 +56,7 @@ for t in range(0,wav.shape[0]):
             else:
                 s_f0=smooth_f0(f0[t-SMOOTH_RANGE:t+SMOOTH_RANGE])
             for k in range(0,K):
-                ph[k] += 2*pi*(s_f0/(k+2)+(np.random.rand(1)[0]*2-1)*0*s_f0)/fs
+                ph[k] += 2*pi*(s_f0/(k+2)+(np.random.rand(1)[0]*2-1)*1*s_f0)/fs
                 xm[t] += h*cos(ph[k])
         else:
             ph=[pi/2]*K
@@ -81,7 +81,7 @@ ysub=y-wav
 ysub*=8
 
 
-wav=0.5*wav+mix*highpass(ysub,fs,1000)
+wav=(1-mix)*wav+mix*highpass(ysub,fs,1000)
 
 soundfile.write("test.wav",wav,fs)
 
